@@ -14,6 +14,7 @@
 
 __version__ = '1.3'
 
+from subprocess import call
 from idc import *
 from idaapi import *
 from idautils import *
@@ -1452,11 +1453,29 @@ class controlFlowinator:
         # Retrieves a list of `callObj's`
         self._get_all_function_calls()
 
+        # Retrieves calling convention
+        self.call_conv = self._get_calling_convention()
+
         if not fast:
             self.lvars = get_function_vars(c=self, only_locals=True)
             self.args = get_function_vars(c=self, only_args=True)
             self.ret_type = get_return_type(cf=self.cf)
 
+    def _get_calling_convention(self):
+        """Gets the calling convention of the function from idc.get_type()"""
+
+        list_of_convs = ['_cdecl', 
+            '__clrcall', '__stdcall', '__fastcall', '__thiscall', 
+            '__vectorcall', '__usercall', '__userpurge', '__golang']
+
+        func_type = idc.get_type(self.ea)
+
+        for conv in list_of_convs:
+            if conv in func_type:
+                return conv
+
+        return None
+        
     def _e(self, index):
         """Syntactic sugar"""
 
